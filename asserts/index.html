@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>短网址</title>
+    <meta charset="UTF-8">
+    <link href="//cdn.bootcss.com/bootstrap/3.3.6/css/bootstrap.css" rel="stylesheet">
+    <script src="//cdn.bootcss.com/jquery/3.0.0/jquery.min.js"></script>
+    <script src="//cdn.bootcss.com/clipboard.js/1.5.12/clipboard.min.js"></script>
+</head>
+
+<body>
+    <div class="container .col-sm-12">
+        <div class="col-sm-offset-2 col-sm-8" style="padding:15% 5%;">
+            <div class="text-center">
+                <h3>短网址</h3>
+            </div>
+            <div class="input-group">
+                <input id="url" type="text" class="form-control" placeholder="">
+                <span class="input-group-btn">
+                    <button id="submit" class="btn btn-default" type="button">生成短网址</button>
+                </span>
+            </div>
+            </br>
+            <div class="text-center">
+                <a id="error" class="text-warning" style="display:none;"></a>
+                <a id="tinyurl" class="text-success" style="display:none;" target="_blank"></a>
+                <a id="copy" class="text-info" style="display:none;" href="javascript:;">复制</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        function isUrl(url) {
+            var pattern = "^((https|http)?://)"  
+                + "?(([0-9a-z_!~*'().&=+$%-]+: )?[0-9a-z_!~*'().&=+$%-]+@)?" //ftp的user@  
+                + "(([0-9]{1,3}\.){3}[0-9]{1,3}" // IP形式的URL- 199.194.52.184  
+                + "|" // 允许IP和DOMAIN（域名） 
+                + "([0-9a-z_!~*'()-]+\.)*" // 域名- www.  
+                + "([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\." // 二级域名  
+                + "[a-z]{2,10})" // first level domain- .com or .museum  
+                + "(:[0-9]{1,4})?" // 端口- :80  
+                + "((/?)|" // a slash isn't required if there is no file name  
+                + "(/[0-9a-z_!~*'().;?:@&=+$,%#-]+)+/?)$";  
+            var reg = new RegExp();
+            reg.compile(pattern);
+            return reg.test(url);
+        }
+
+        $("#submit").click(function(){
+            url = $("#url").val();
+            if (!isUrl(url)) {
+                $("#error").text("不是一个有效的网址").show();
+                $("#tinyurl").hide();
+                $("#copy").hide();
+                return;
+            }
+
+            $.post("/create", {url:url}, function(result) {
+                if (result.err != "") {
+                    $("#error").text("生成短网址失败").show();
+                    $("#tinyurl").hide();
+                    $("#copy").hide();
+                } else {
+                    val = window.location.href + result.val;
+                    $("#tinyurl").text(val).attr("href", val).show();
+                    $("#copy").show();
+                    $("#error").hide();
+                }
+            });
+        });
+
+        $('#url').keydown(function(event){
+            if (event.keyCode == 13) {
+                $("#submit").click();
+            }
+        });
+
+        var clipboard = new Clipboard("#copy", {
+            text: function() {
+                return $("#tinyurl").text();
+            }
+        });
+    </script>
+</body>
+
+</html>
